@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('pull') {
+            steps {
+                git branch: 'main', url: 'https://github.com/mayur4279/devops-fullstack-app.git'
+            }
+        }
+
+        
+    
+        stage('Build-frontend') {
+            steps {
+                
+                sh ''' docker rmi mayur4279/frontend-project  || true 
+                      cd frontend 
+                      docker build -t  mayur4279/frontend-project  . '''
+            }
+        }
+        
+        stage('Build-backend') {
+            steps {
+                 sh ''' docker rmi  mayur4279/backend-project  || true
+                        cd backend
+                        docker build -t  mayur4279/backend-project ''' 
+            }
+        }
+    
+        
+    stage('Deploy-frontend') {
+        steps {  
+            sh '''screen -S frontend-pf -X kill || true
+                  kill -9 $(lsof -t -i:3000) || true
+                  docker stop frontend-container || true
+                  docker rm frontend-container || true 
+                  docker run -d  -p  3000:80  --name  frontend-container   mayur4279/frontend-project
+              '''
+        }
+    }  
+    
+
+    stage('Deploy-backend') {
+      steps {  
+            sh '''screen -S backend-pf  -X kill || true
+                  kill -9 $(lsof -t -i:8080) || true
+                  docker stop backend-container || true
+                  docker rm backend-container || true 
+                  docker run -d  -p  8080:8080  --name  backend-container   mayur4279/backend-project
+              '''
+        }
+    }
+
+
+     stage('Docker Push') {
+        steps {
+            script {
+                withDockerRegistry([credentialsId: 'dockercred', toolName: 'docker']) {
+                sh 'docker push mayur4279/frontend-project'
+                sh 'docker push mayur4279/backend-project'
+            }
+        }
+    }
+}
+
+
+
+
+stage('Minikub-Deployment ') {
+      steps {  
+ 
+            sh ''' export KUBECONFIG=/home/ubuntu/.kube/config
+                  docker stop backend-container || true
+                  docker stop frontend-container || true 
+                pkill -f "kubectl port-forward" || true 
+                cd deployment
+                kubectl apply -f configmap.yaml
+                kubectl apply -f secret.yaml
+                kubectl apply -f database-deployment.yaml
+                kubectl apply -f database-service.yaml
+                kubectl apply -f backend-deployment.yaml
+                kubectl apply -f backend-service.yaml
+                kubectl apply -f frontend-deployment.yaml
+                kubectl apply -f frontend-service.yaml
+                docker system prune -a -f
+              '''
+        }
+    }
+
+    }
+}
+
