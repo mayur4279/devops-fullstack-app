@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
-  DB_HOST=http://backend-service:8080
-  DB_NAME=employee_db
-  ALLOWED_ORIGINS=*
-  DB_PORT=5432
+  DB_HOST: "database-service"
+  DB_NAME: "employee_db"
+  ALLOWED_ORIGINS: "*"
+  DB_PORT: "5432"

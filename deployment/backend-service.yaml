@@ -4,10 +4,9 @@ metadata:
   name: backend-service
 spec:
   selector:
-    app: backend-service
+    app: backend
   ports:
   - port: 8080
     targetPort: 8080
-    NodePort: 32000
+    nodePort: 32000
   type: NodePort
-
