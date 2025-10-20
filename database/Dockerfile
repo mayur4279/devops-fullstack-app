@@ -2,7 +2,7 @@ FROM postgres:18-alpine As database
 
 EXPOSE 5432  
 
-RUN  ./init.sh   
+COPY init.sh /docker-entrypoint-initdb.d/
 
 CMD ["postgres"]
 
