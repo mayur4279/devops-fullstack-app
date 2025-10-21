@@ -27,6 +27,25 @@ pipeline {
             }
         }
     
+        stage('Build-database') {
+            steps {
+                 sh ''' docker rmi  mayur4279/database-project  || true
+                        cd database
+                        docker build -t  mayur4279/database-project ''' 
+            }
+        }
+
+
+    stage('Deploy-database') {
+      steps {  
+            sh '''screen -S backend-pf  -X kill || true
+                  kill -9 $(lsof -t -i:8080) || true
+                  docker stop database-container || true
+                  docker rm database-container || true 
+                  docker run -d  -p  8080:8080  --name  database-container   mayur4279/database-project
+              '''
+        }
+    }
         
     stage('Deploy-frontend') {
         steps {  
@@ -52,12 +71,15 @@ pipeline {
     }
 
 
+
+
      stage('Docker Push') {
         steps {
             script {
                 withDockerRegistry([credentialsId: 'dockercred', toolName: 'docker']) {
                 sh 'docker push mayur4279/frontend-project'
                 sh 'docker push mayur4279/backend-project'
+                sh 'docker push mayur4279/database-project'
             }
         }
     }
